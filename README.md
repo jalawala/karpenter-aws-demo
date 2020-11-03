@@ -74,7 +74,7 @@ kubectl get pods -n karpenter
 
 ### Apply Autoscaling YAML
 ```
-NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name default --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn")
+export NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name default --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn")
 envsubst < autoscaler.yaml | kubectl apply -f -
 
 sleep 3
