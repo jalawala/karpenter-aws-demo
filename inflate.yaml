@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capacity
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: capacity
+  template:
+    metadata:
+      labels:
+        app: capacity
+    spec:
+      containers:
+      - name: capacity
+        image: k8s.gcr.io/pause
+        resources:
+          requests:
+            cpu: 1
