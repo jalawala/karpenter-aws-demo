@@ -75,11 +75,10 @@ kubectl get pods -n karpenter
 ### Apply Autoscaling YAML
 ```
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name default --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn")
-envsubst < "autoscaler.yaml" > "autoscaler.yaml"
-```
-```
-kubectl apply -f resources.yaml
+envsubst < autoscaler.yaml | kubectl apply -f -
+
 sleep 3
+
 kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq ".status"
 kubectl get metricsproducers.autoscaling.karpenter.sh demo -ojson | jq ".status"
 kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson | jq ".status"
