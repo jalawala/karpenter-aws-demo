@@ -1,20 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: capacity
+  name: inflate
 spec:
-  replicas: 10
+  replicas: ${REPLICAS}
   selector:
     matchLabels:
-      app: capacity
+      app: inflate
   template:
     metadata:
       labels:
-        app: capacity
+        app: inflate
     spec:
       containers:
-      - name: capacity
+      - name: inflate
         image: k8s.gcr.io/pause
         resources:
           requests:
             cpu: 1
+            memory: 1Gi

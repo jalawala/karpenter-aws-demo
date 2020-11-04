@@ -72,21 +72,24 @@ kubectl get pods -n karpenter
 
 ## Demo
 
-### Apply Autoscaling YAML
+### Apply YAML and Watch
 ```
-export NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name default --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn")
+NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < autoscaler.yaml | kubectl apply -f -
 
-sleep 3
-
-kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq ".status"
-kubectl get metricsproducers.autoscaling.karpenter.sh demo -ojson | jq ".status"
-kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson | jq ".status"
+# Open in 5 separate terminals
+watch -d 'kubectl get pods'
+watch -d 'kubectl get nodes'
+watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh demo -ojson | jq ".status.reservedCapacity"'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson | jq ".status" | jq "del(.conditions)"'
+watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
 ```
 
-### Add more Pods
+### Scale the Pods and Nodes
 ```
-kubectl apply -f inflate.yaml
+REPLICAS=2 envsubst < inflate.yaml | kubectl apply -f -
+REPLICAS=10 envsubst < inflate.yaml | kubectl apply -f -
+REPLICAS=30 envsubst < inflate.yaml | kubectl apply -f -
 ```
 
 ## Cleanup
