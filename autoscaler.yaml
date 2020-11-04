@@ -37,4 +37,4 @@ metadata:
 spec:
   reservedCapacity:
     nodeSelector:
-      eks.amazonaws.com/nodegroup: default
+      eks.amazonaws.com/nodegroup: demo
