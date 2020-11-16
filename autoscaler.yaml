@@ -20,12 +20,12 @@ spec:
   maxReplicas: 5
   metrics:
   - prometheus:
-      query: karpenter_metrics_producer_reserved_capacity_cpu_utilization{name="demo"}
+      query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
       target:
         type: Utilization
         value: 60
   - prometheus:
-      query: karpenter_metrics_producer_reserved_capacity_memory_utilization{name="demo"}
+      query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
       target:
         type: Utilization
         value: 60
