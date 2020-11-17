@@ -17,7 +17,7 @@ spec:
     kind: ScalableNodeGroup
     name: demo
   minReplicas: 1
-  maxReplicas: 5
+  maxReplicas: 10
   metrics:
   - prometheus:
       query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
