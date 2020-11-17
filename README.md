@@ -81,8 +81,8 @@ NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name
 envsubst < autoscaler.yaml | kubectl apply -f -
 
 # Open in 5 separate terminals
-watch -d 'kubectl get pods'
-watch -d 'kubectl get nodes'
+watch 'kubectl get pods'
+watch 'kubectl get nodes'
 watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh demo -ojson | jq ".status.reservedCapacity"'
 watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson | jq ".status" | jq "del(.conditions)"'
 watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
