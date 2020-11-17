@@ -29,7 +29,7 @@ TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 (
     cd $TMP
-    git clone https://github.com/ellistarn/karpenter.git
+    git clone https://github.com/awslabs/karpenter.git
     cd karpenter
     make toolchain
     make generate
