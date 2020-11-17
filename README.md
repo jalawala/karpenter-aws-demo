@@ -4,6 +4,7 @@
 
 ### Environment
 ```
+CLOUD_PROVIDER=aws
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 CLUSTER_NAME=$USER-karpenter-aws-demo
 REGION=us-west-2
