@@ -75,6 +75,7 @@ kubectl get pods -n karpenter
 
 ### Apply YAML and Watch
 ```
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/autoscaler.yaml
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name etarn-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < autoscaler.yaml | kubectl apply -f -
 
