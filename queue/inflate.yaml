@@ -49,7 +49,7 @@ spec:
             - -c
             - >
               RECEIPT_HANDLE=$(aws sqs receive-message --queue-url $QUEUE_URL | jq -r '.Messages[0].ReceiptHandle');
-              aws sqs delete-message --queue-url $QUEUE_URL --receipt-handle ${DOLLAR}RECEIPT_HANDLE;
+              aws sqs delete-message --queue-url $QUEUE_URL --receipt-handle $RECEIPT_HANDLE;
               sleep 10;
           resources:
             requests:

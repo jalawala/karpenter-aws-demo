@@ -28,8 +28,7 @@ NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
 envsubst < base.yaml | kubectl apply -f -
 
-DOLLAR='$' \
-envsubst < inflate.yaml | kubectl apply -f -  
+envsubst '$QUEUE_URL, $QUEUE_NAME' < inflate.yaml | kubectl apply -f -  
 
 # Open in 4 separate terminals
 watch -d "kubectl get pods -n karpenter | grep queue-processor | wc -l"
