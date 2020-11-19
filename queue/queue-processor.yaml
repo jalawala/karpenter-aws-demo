@@ -12,7 +12,7 @@ spec:
   maxReplicas: 50
   behavior:
     scaleDown:
-      stabilizationWindowSeconds: 180
+      stabilizationWindowSeconds: 60
   metrics:
     - prometheus:
         query: karpenter_queue_length{name="$QUEUE_NAME"}
@@ -48,9 +48,12 @@ spec:
             - /bin/sh
             - -c
             - >
-              RECEIPT_HANDLE=$(aws sqs receive-message --queue-url $QUEUE_URL | jq -r '.Messages[0].ReceiptHandle');
-              aws sqs delete-message --queue-url $QUEUE_URL --receipt-handle $RECEIPT_HANDLE;
-              sleep 10;
+              while true ;
+              do
+              RECEIPT_HANDLE=$(aws sqs receive-message --queue-url $QUEUE_URL | jq -r '.Messages[0].ReceiptHandle') &&
+              aws sqs delete-message --queue-url $QUEUE_URL --receipt-handle $RECEIPT_HANDLE &&
+              sleep 30 ;
+              done
           resources:
             requests:
               memory: 100Mi
