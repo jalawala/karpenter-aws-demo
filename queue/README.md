@@ -1,4 +1,4 @@
-# Karpenter Queue AWS Demo (20 minutes to complete)
+# Karpenter Queue AWS Demo (10 minutes to complete)
 
 This demo uses the AWS SQS Queue as the source of metrics for scale signals.
 
@@ -8,7 +8,7 @@ This demo scales 1 pod per message in the queue (inflate.yaml). It also scales u
 
 ### Setup
 
-``` 
+```bash
 
 QUEUE_NAME=$USER-demo-queue
 
@@ -22,11 +22,11 @@ QUEUE_URL=$(aws sqs get-queue-url --queue-name <Insert_Queue_Name> --output json
 
 #### Apply Scaling Infrastructure
 
-``` 
+```bash
 
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
-envsubst < base.yaml | kubectl apply -f -
+envsubst < manifest.yaml | kubectl apply -f -
 
 envsubst '$QUEUE_URL, $QUEUE_NAME' < inflate.yaml | kubectl apply -f -  
 
@@ -39,18 +39,9 @@ watch -d 'kubectl get scalablenodegroups -ojson | jq "del(.status.conditions)"| 
 
 #### Scale the Queue Up and Watch
 
-``` 
+```bash
 
 # Sets the length of the queue to 30 messages
 export REPLICAS=30
-SUBST_MESSAGE='$REPLICAS,$QUEUE_URL' 
-envsubst "$SUBST_MESSAGE" < messages.yaml | kubectl apply -f -
-```
-
-### Cleanup
-
-``` 
-
-eksctl delete cluster --name ${CLUSTER_NAME}
-aws iam delete-policy --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/Karpenter
+envsubst "'$REPLICAS, $QUEUE_URL'" < messages.yaml | kubectl apply -f -
 ```
