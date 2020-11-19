@@ -38,7 +38,7 @@ spec:
     spec:
       containers:
         - name: queue-processor
-          image: ellistarn/debug:latest
+          image: ellistarn/debug
           env:
             - name: AWS_DEFAULT_REGION
               value: "us-west-2"
