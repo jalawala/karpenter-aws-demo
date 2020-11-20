@@ -6,7 +6,7 @@
 
 ```bash
 
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/capacity-reservations/autoscaler.yaml
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/capacity-reservations/manifest.yaml
 
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name $USER-karpenter-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
