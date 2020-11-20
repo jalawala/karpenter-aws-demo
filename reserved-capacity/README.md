@@ -27,4 +27,6 @@ REPLICAS=30 envsubst < inflate.yaml | kubectl apply -f -
 ```
 
 ## Cleanup
+```bash
 kubectl delete namespace karpenter-reserved-capacity-demo
+```

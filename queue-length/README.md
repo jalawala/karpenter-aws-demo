@@ -51,6 +51,6 @@ done
 ```
 
 ## Cleanup
-```
+```bash
 kubectl delete namespace karpenter-queue-length-demo
 ```
