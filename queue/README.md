@@ -19,9 +19,14 @@ QUEUE_URL=$(aws sqs create-queue --queue-name $QUEUE_NAME --output json | jq -r 
 
 ```bash
 
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue/manifest.yaml
+
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
 envsubst < manifest.yaml | kubectl apply -f -
+
+
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue/queue-processor.yaml
 
 envsubst '$QUEUE_URL, $QUEUE_NAME' < queue-processor.yaml | kubectl apply -f -  
 
@@ -36,9 +41,17 @@ watch -d 'kubectl get scalablenodegroups -ojson | jq "del(.status.conditions)"| 
 
 ```bash
 
-# Send 10 messages to the queue
-aws sqs send-message-batch --queue-url $QUEUE_URL --entries file://message-batch.json
-
-# Send # of Replicas to the Queue. Send-message-batch can only send 10 messages. Use this command to send a large batch.
-REPLICAS=30 envsubst "'$REPLICAS, $QUEUE_URL'" < messages.yaml | kubectl apply -f -
+# Send 10 messages to the queue every 10 seconds
+while true ;
+do
+aws sqs send-message-batch --queue-url $QUEUE_URL --entries "$(cat << EOM
+[
+  {"Id": "0","MessageBody": " "},{"Id": "1","MessageBody": " "},{"Id": "2","MessageBody": " "},{"Id": "3","MessageBody": " "},
+  {"Id": "4","MessageBody": " "},{"Id": "5","MessageBody": " "},{"Id": "6","MessageBody": " "},{"Id": "7","MessageBody": " "},
+  {"Id": "8","MessageBody": " "},{"Id": "9","MessageBody": " "}
+]
+EOM
+)" ;
+sleep 10; 
+done
 ```
