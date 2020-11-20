@@ -1,6 +1,6 @@
-# Karpenter AWS Demo (10-15 minutes to set up, 10 minutes per demo)
+# Karpenter AWS Demo (20 minutes)
 
-Karpenter allows users to configure different metrics producers that signal what to scale, and when to scale. Each of the folders in this repo show examples of how you can configure your cluster to work and see the scaling process in real-time on your own AWS account.
+This demo will explore how to use Karpenter to scale node groups using different metrics.
 
 ## Setup
 
@@ -102,12 +102,10 @@ kubectl delete pods -n karpenter -l control-plane=karpenter
 kubectl get pods -n karpenter
 ```
 
-## Demo Options
+## Demos
 
-You can continue the demo process from here by doing any of the available demos.
-
-* [Queue Demo](https://github.com/ellistarn/karpenter-aws-demo/blob/main/queue/)
-* [Capacity Reservation Demo](https://github.com/ellistarn/karpenter-aws-demo/blob/main/capacity-reservations)
+* [Queue Length](https://github.com/ellistarn/karpenter-aws-demo/blob/main/queue/)
+* [Reserved Capacity](https://github.com/ellistarn/karpenter-aws-demo/blob/main/capacity-reservations)
 
 ## Cleanup
 
