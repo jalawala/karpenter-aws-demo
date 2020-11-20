@@ -22,7 +22,7 @@ spec:
   scaleTargetRef:
     apiVersion: autoscaling.karpenter.sh/v1alpha1
     kind: ScalableNodeGroup
-    name: demo
+    name: capacity
   minReplicas: 1
   maxReplicas: 10
   metrics:
