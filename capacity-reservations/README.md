@@ -1,8 +1,6 @@
-# Karpenter AWS Demo (10 minutes to complete)
+# Reserved Capacity Metric
 
-## Demo
-
-### Apply YAML and Watch
+## Apply YAML and Watch
 
 ```bash
 
@@ -19,7 +17,7 @@ watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson
 watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
 ```
 
-### Scale the Pods and Nodes
+## Scale the Pods and Nodes
 
 ```bash
 
