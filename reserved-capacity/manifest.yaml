@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: karpenter-capacity-reservation-demo
+  name: karpenter-reserved-capacity-demo
 ---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: ScalableNodeGroup
 metadata:
   name: capacity
-  namespace: karpenter-capacity-reservation-demo
+  namespace: karpenter-reserved-capacity-demo
 spec:
   replicas: 1
   type: AWSEKSNodeGroup
@@ -17,7 +17,7 @@ apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: HorizontalAutoscaler
 metadata:
   name: capacity
-  namespace: karpenter-capacity-reservation-demo
+  namespace: karpenter-reserved-capacity-demo
 spec:
   scaleTargetRef:
     apiVersion: autoscaling.karpenter.sh/v1alpha1
@@ -41,7 +41,7 @@ apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: MetricsProducer
 metadata:
   name: demo
-  namespace: karpenter-capacity-reservation-demo
+  namespace: karpenter-reserved-capacity-demo
 spec:
   reservedCapacity:
     nodeSelector:

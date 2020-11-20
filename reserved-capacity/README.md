@@ -9,7 +9,7 @@ NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name
 envsubst < manifest.yaml | kubectl apply -f -
 
 # Open in 5 separate terminals
-watch 'kubectl get pods'
+watch 'kubectl get pods -n karpenter-reserved-capacity-demo'
 watch 'kubectl get nodes'
 watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh demo -n karpenter-reserved-capacity-demo -ojson | jq ".status.reservedCapacity"'
 watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-reserved-capacity-demo -ojson | jq ".status" | jq "del(.conditions)"'
