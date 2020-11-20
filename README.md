@@ -1,9 +1,13 @@
-# Karpenter AWS Demo (20 minutes to complete)
+# Karpenter AWS Demo (10-15 minutes to set up, 10 minutes per demo)
+
+Karpenter allows users to configure different metrics producers that signal what to scale, and when to scale. Each of the folders in this repo show examples of how you can configure your cluster to work and see the scaling process in real-time on your own AWS account.
 
 ## Setup
 
 ### Environment
-```
+
+```bash
+
 CLOUD_PROVIDER=aws
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 CLUSTER_NAME=$USER-karpenter-aws-demo
@@ -11,7 +15,9 @@ REGION=us-west-2
 ```
 
 ### Cluster
-```
+
+```bash
+
 eksctl create cluster \
 --name ${CLUSTER_NAME} \
 --version 1.16 \
@@ -25,7 +31,9 @@ eksctl create cluster \
 ```
 
 ### Karpenter Controller
-```
+
+```bash
+
 TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 (
@@ -40,7 +48,9 @@ rm -rf $TMP
 ```
 
 ### AWS Credentials
-```
+
+```bash
+
 aws iam create-policy --policy-name Karpenter --policy-document "$(cat <<-EOM
 {
     "Version": "2012-10-17",
@@ -52,13 +62,34 @@ aws iam create-policy --policy-name Karpenter --policy-document "$(cat <<-EOM
             ],
             "Effect": "Allow",
             "Resource": "*"
+        },
+        {
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:UpdateAutoScalingGroup"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Action": [
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:SendMessage"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
         }
     ]
 }
 EOM
 )"
 ```
-```
+
+```bash
+
 eksctl utils associate-iam-oidc-provider --region=${REGION} --cluster=${CLUSTER_NAME} --approve
 eksctl create iamserviceaccount --cluster ${CLUSTER_NAME} \
 --name default \
@@ -71,34 +102,17 @@ kubectl delete pods -n karpenter -l control-plane=karpenter
 kubectl get pods -n karpenter
 ```
 
-## Demo
+## Demo Options
 
-### Apply YAML and Watch
-```
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/autoscaler.yaml
+You can continue the demo process from here by doing any of the available demos.
 
-NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name $USER-karpenter-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
-envsubst < autoscaler.yaml | kubectl apply -f -
-
-# Open in 5 separate terminals
-watch 'kubectl get pods'
-watch 'kubectl get nodes'
-watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh demo -ojson | jq ".status.reservedCapacity"'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh demo -ojson | jq ".status" | jq "del(.conditions)"'
-watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
-```
-
-### Scale the Pods and Nodes
-```
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/inflate.yaml
-
-REPLICAS=2 envsubst < inflate.yaml | kubectl apply -f -
-REPLICAS=10 envsubst < inflate.yaml | kubectl apply -f -
-REPLICAS=30 envsubst < inflate.yaml | kubectl apply -f -
-```
+* [Queue Demo](https://github.com/ellistarn/karpenter-aws-demo/blob/main/queue/)
+* [Capacity Reservation Demo](https://github.com/ellistarn/karpenter-aws-demo/blob/main/capacity-reservations)
 
 ## Cleanup
-```
+
+```bash
+
 eksctl delete cluster --name ${CLUSTER_NAME}
 aws iam delete-policy --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/Karpenter
 ```

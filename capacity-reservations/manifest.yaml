@@ -19,16 +19,16 @@ spec:
   minReplicas: 1
   maxReplicas: 10
   metrics:
-  - prometheus:
-      query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
-      target:
-        type: Utilization
-        value: 60
-  - prometheus:
-      query: karpenter_reserved_capacity_memory_utilization{name="demo"}
-      target:
-        type: Utilization
-        value: 60
+    - prometheus:
+        query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
+        target:
+          type: Utilization
+          value: 60
+    - prometheus:
+        query: karpenter_reserved_capacity_memory_utilization{name="demo"}
+        target:
+          type: Utilization
+          value: 60
 ---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: MetricsProducer
