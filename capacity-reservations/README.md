@@ -1,4 +1,4 @@
-# Reserved Capacity Metric
+# Reserved Capacity Demo
 
 ## Apply YAML and Watch
 
