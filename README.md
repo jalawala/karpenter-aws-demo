@@ -22,7 +22,7 @@ eksctl create cluster \
 --name ${CLUSTER_NAME} \
 --version 1.16 \
 --region ${REGION} \
---nodegroup-name karpenter-demo \
+--nodegroup-name demo \
 --node-type m5.2xlarge \
 --nodes 1 \
 --nodes-min 1 \
