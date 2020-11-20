@@ -22,7 +22,7 @@ eksctl create cluster \
 --name ${CLUSTER_NAME} \
 --version 1.16 \
 --region ${REGION} \
---nodegroup-name demo \
+--nodegroup-name karpenter-demo \
 --node-type m5.2xlarge \
 --nodes 1 \
 --nodes-min 1 \
@@ -105,7 +105,7 @@ kubectl get pods -n karpenter
 ## Demos
 
 * [Queue Length](https://github.com/ellistarn/karpenter-aws-demo/blob/main/queue/)
-* [Reserved Capacity](https://github.com/ellistarn/karpenter-aws-demo/blob/main/capacity-reservations)
+* [Reserved Capacity](https://github.com/ellistarn/karpenter-aws-demo/blob/main/reserved-capacity)
 
 ## Cleanup
 

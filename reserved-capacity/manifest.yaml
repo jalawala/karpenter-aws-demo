@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karpenter-capacity-reservation-demo
+---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: ScalableNodeGroup
 metadata:
-  name: demo
+  name: capacity
+  namespace: karpenter-capacity-reservation-demo
 spec:
   replicas: 1
   type: AWSEKSNodeGroup
@@ -10,22 +16,23 @@ spec:
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: HorizontalAutoscaler
 metadata:
-  name: demo
+  name: capacity
+  namespace: karpenter-capacity-reservation-demo
 spec:
   scaleTargetRef:
     apiVersion: autoscaling.karpenter.sh/v1alpha1
     kind: ScalableNodeGroup
-    name: demo
+    name: karpenter-demo
   minReplicas: 1
   maxReplicas: 10
   metrics:
     - prometheus:
-        query: karpenter_reserved_capacity_cpu_utilization{name="demo"}
+        query: karpenter_reserved_capacity_cpu_utilization{name="capacity"}
         target:
           type: Utilization
           value: 60
     - prometheus:
-        query: karpenter_reserved_capacity_memory_utilization{name="demo"}
+        query: karpenter_reserved_capacity_memory_utilization{name="capacity"}
         target:
           type: Utilization
           value: 60
@@ -34,6 +41,7 @@ apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: MetricsProducer
 metadata:
   name: demo
+  namespace: karpenter-capacity-reservation-demo
 spec:
   reservedCapacity:
     nodeSelector:
