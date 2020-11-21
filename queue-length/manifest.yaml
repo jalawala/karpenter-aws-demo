@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karpenter-queue-length-demo
+---
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: MetricsProducer
+metadata:
+  name: demo
+  namespace: karpenter-queue-length-demo
+spec:
+  queue:
+    type: AWSSQSQueue
+    id: ${QUEUE_ARN}
+---
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: ScalableNodeGroup
+metadata:
+  name: capacity
+  namespace: karpenter-queue-length-demo
+spec:
+  replicas: 1
+  type: AWSEKSNodeGroup
+  id: ${NODE_GROUP_ARN}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscriber
+  namespace: karpenter-queue-length-demo
+spec:
+  replicas: 0 # Will be scaled by autocaler
+  selector:
+    matchLabels:
+      app: subscriber
+  template:
+    metadata:
+      labels:
+        app: subscriber
+    spec:
+      containers:
+        - name: subscriber
+          image: ellistarn/debug
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: "us-west-2"
+            - name: AWS_DEFAULT_OUTPUT
+              value: "json"
+          command:
+            - /bin/sh
+            - -c
+            - >
+              while true; do
+                aws sqs delete-message --queue-url ${QUEUE_URL} --receipt-handle $(aws sqs receive-message --queue-url ${QUEUE_URL} | jq -r '.Messages[0].ReceiptHandle')
+                sleep 30;
+              done
+          resources:
+            requests:
+              memory: 100Mi
+              cpu: 1
+---
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: HorizontalAutoscaler
+metadata:
+  name: capacity
+  namespace: karpenter-queue-length-demo
+spec:
+  scaleTargetRef:
+    apiVersion: autoscaling.karpenter.sh/v1alpha1
+    kind: ScalableNodeGroup
+    name: capacity
+  minReplicas: 1
+  maxReplicas: 10
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+  metrics:
+    - prometheus:
+        query: karpenter_queue_length{name="demo"} # Name matches the queue metrics producer name
+        target:
+          type: AverageValue
+          value: 4 # One node per 4 messages
+---
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: HorizontalAutoscaler
+metadata:
+  name: subscriber
+  namespace: karpenter-queue-length-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: subscriber
+  minReplicas: 0
+  maxReplicas: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+  metrics:
+    - prometheus:
+        query: karpenter_queue_length{name="demo"} # Name matches the queue metrics producer name
+        target:
+          type: AverageValue
+          value: 1 # one message per pod

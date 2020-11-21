@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: inflate
+  namespace: karpenter-reserved-capacity-demo
 spec:
   replicas: ${REPLICAS}
   selector:
