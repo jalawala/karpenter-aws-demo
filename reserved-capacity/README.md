@@ -3,7 +3,7 @@
 ## Apply YAML and Watch
 
 ```bash
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/capacity-reservations/manifest.yaml
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/reserved-capacity/manifest.yaml
 
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name $USER-karpenter-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
@@ -19,7 +19,7 @@ watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh capacity -n ka
 ## Scale the Pods and Nodes
 
 ```bash
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/capacity-reservations/inflate.yaml
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/reserved-capacity/inflate.yaml
 
 REPLICAS=2 envsubst < inflate.yaml | kubectl apply -f -
 REPLICAS=10 envsubst < inflate.yaml | kubectl apply -f -

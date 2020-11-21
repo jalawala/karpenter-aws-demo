@@ -7,7 +7,7 @@ We will deploy pods that handle 1 message every 30 seconds. The autoscalers are 
 ## Apply YAML and Watch
 
 ```bash
-wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue/manifest.yaml
+wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue-length/manifest.yaml
 
 QUEUE_NAME=$USER-demo-queue \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
