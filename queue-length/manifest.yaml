@@ -57,7 +57,7 @@ spec:
           resources:
             requests:
               memory: 100Mi
-              cpu: 1
+              cpu: 1700m #1700m allocates max 4 pods/node (m5.2xlarge), lower this for higher pod density
 ---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: HorizontalAutoscaler
@@ -92,7 +92,7 @@ spec:
     kind: Deployment
     name: subscriber
   minReplicas: 0
-  maxReplicas: 50
+  maxReplicas: 40
   behavior:
     scaleDown:
       stabilizationWindowSeconds: 60
@@ -102,3 +102,15 @@ spec:
         target:
           type: AverageValue
           value: 1 # one message per pod
+---
+# Optional
+# This metrics producer has the same functionality as the reserved-capacity demo, and is used here to help visualize the scaling process
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: MetricsProducer
+metadata:
+  name: capacity-watcher
+  namespace: karpenter-queue-length-demo
+spec:
+  reservedCapacity:
+    nodeSelector:
+      eks.amazonaws.com/nodegroup: demo
