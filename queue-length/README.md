@@ -4,18 +4,28 @@ This demo will use the length of an AWS SQS Queue to autoscale a Deployment and 
 
 We will deploy pods that handle 1 message every 30 seconds. The autoscalers are configured to create 4 nodes per pod.
 
-## Apply YAML and Watch
+## Environment
+
+```bash
+QUEUE_NAME=$USER-demo-queue 
+QUEUE_URL=$(aws sqs create-queue --queue-name $QUEUE_NAME --output json | jq -r '.QueueUrl') 
+```
+
+## Apply YAML
 
 ```bash
 wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue-length/manifest.yaml
 
-QUEUE_NAME=$USER-demo-queue \
+QUEUE_NAME=$QUEUE_NAME \
+QUEUE_URL=$QUEUE_URL \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
-QUEUE_URL=$(aws sqs create-queue --queue-name $QUEUE_NAME --output json | jq -r '.QueueUrl') \
 NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
+```
 
-# Grant SQSQueue permissions to the namespace's default service account
+## Grant SQSQueue permissions to the namespace's default service account
+
+```bash
 eksctl create iamserviceaccount --cluster ${CLUSTER_NAME} \
 --name default \
 --namespace karpenter-queue-length-demo \
@@ -23,13 +33,21 @@ eksctl create iamserviceaccount --cluster ${CLUSTER_NAME} \
 --override-existing-serviceaccounts \
 --approve
 
-# Open in 5 separate terminals
+kubectl delete pods -n karpenter -l control-plane=karpenter
+kubectl get pods -n karpenter
+```
+
+## Watch Demo
+
+```bash
+# Open in 7 separate terminals
 watch 'kubectl get pods -l app=subscriber -n karpenter-queue-length-demo'
 watch 'kubectl get nodes -n karpenter-queue-length-demo'
 watch -d 'kubectl get metricsproducer demo -n karpenter-queue-length-demo -ojson | jq ".status.queue"'
 watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-queue-length-demo -ojson | jq ".status" | jq "del(.conditions)"'
 watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh subscriber -n karpenter-queue-length-demo -ojson | jq ".status" | jq "del(.conditions)"'
 watch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo -ojson | jq "del(.status.conditions)" | jq ".spec, .status"'
+watch "kubectl get metricsproducers capacity-watcher -n karpenter-queue-length-demo -ojson | jq -r '.status.reservedCapacity'"
 ```
 
 ## Send messages to the Queue
@@ -50,7 +68,13 @@ sleep 10;
 done
 ```
 
-## Cleanup
+# Cleanup
+
 ```bash
+rm manifest.yaml
+
 kubectl delete namespace karpenter-queue-length-demo
+aws sqs delete-queue --queue-url $QUEUE_URL
+# Clean up stacks
+eksctl delete iamserviceaccount --cluster $CLUSTER_NAME --name default --namespace karpenter-queue-length-demo
 ```

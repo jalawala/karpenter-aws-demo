@@ -7,8 +7,6 @@ This demo will explore how to use Karpenter to scale node groups using different
 ### Environment
 
 ```bash
-
-CLOUD_PROVIDER=aws
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 CLUSTER_NAME=$USER-karpenter-aws-demo
 REGION=us-west-2
@@ -17,7 +15,6 @@ REGION=us-west-2
 ### Cluster
 
 ```bash
-
 eksctl create cluster \
 --name ${CLUSTER_NAME} \
 --version 1.16 \
@@ -33,24 +30,39 @@ eksctl create cluster \
 ### Karpenter Controller
 
 ```bash
-
-TMP=$(mktemp -d)
-trap "rm -rf $TMP" EXIT
-(
-    cd $TMP
-    git clone https://github.com/awslabs/karpenter.git
-    cd karpenter
-    make toolchain
-    make generate
-    ./hack/quick-install.sh
-)
-rm -rf $TMP
+helm repo add jetstack https://charts.jetstack.io
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm upgrade --install cert-manager jetstack/cert-manager \
+  --atomic \
+  --create-namespace \
+  --namespace cert-manager \
+  --version v1.0.0 \
+  --set installCRDs=true
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  --atomic \
+  --create-namespace \
+  --namespace monitoring \
+  --version 9.4.5 \
+  --set alertmanager.enabled=false \
+  --set grafana.enabled=false \
+  --set kubeApiServer.enabled=false \
+  --set kubelet.enabled=false \
+  --set kubeControllerManager.enabled=false \
+  --set coreDns.enabled=false \
+  --set kubeDns.enabled=false \
+  --set kubeEtcd.enabled=false \
+  --set kubeScheduler.enabled=false \
+  --set kubeProxy.enabled=false \
+  --set kubeStateMetrics.enabled=false \
+  --set nodeExporter.enabled=false \
+  --set prometheus.enabled=false
+kubectl apply -f https://raw.githubusercontent.com/awslabs/karpenter/main/releases/aws/v0.1.0.yaml
 ```
 
 ### AWS Credentials
 
 ```bash
-
 aws iam create-policy --policy-name Karpenter --policy-document "$(cat <<-EOM
 {
     "Version": "2012-10-17",
@@ -89,7 +101,6 @@ EOM
 ```
 
 ```bash
-
 eksctl utils associate-iam-oidc-provider --region=${REGION} --cluster=${CLUSTER_NAME} --approve
 eksctl create iamserviceaccount --cluster ${CLUSTER_NAME} \
 --name default \
@@ -110,7 +121,6 @@ kubectl get pods -n karpenter
 ## Cleanup
 
 ```bash
-
 eksctl delete cluster --name ${CLUSTER_NAME}
 aws iam delete-policy --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/Karpenter
 ```

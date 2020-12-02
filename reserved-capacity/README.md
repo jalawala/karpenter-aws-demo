@@ -27,6 +27,11 @@ REPLICAS=30 envsubst < inflate.yaml | kubectl apply -f -
 ```
 
 ## Cleanup
+
 ```bash
+rm manifest.yaml
+rm inflate.yaml
 kubectl delete namespace karpenter-reserved-capacity-demo
+# Clean up stacks
+eksctl delete iamserviceaccount --cluster $CLUSTER_NAME --name default --namespace karpenter-reserved-capacity-demo
 ```
