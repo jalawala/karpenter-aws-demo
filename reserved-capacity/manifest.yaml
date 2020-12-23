@@ -45,4 +45,4 @@ metadata:
 spec:
   reservedCapacity:
     nodeSelector:
-      eks.amazonaws.com/nodegroup: demo
+      eks.amazonaws.com/nodegroup: karpenter-aws-demo

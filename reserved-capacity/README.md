@@ -5,7 +5,7 @@
 ```bash
 wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/reserved-capacity/manifest.yaml
 
-NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name $USER-karpenter-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
+NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name karpenter-aws-demo --cluster-name $USER-karpenter-aws-demo --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
 
 # Open in 5 separate terminals
