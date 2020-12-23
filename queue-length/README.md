@@ -2,7 +2,7 @@
 
 This demo will use the length of an AWS SQS Queue to autoscale a Deployment and Node Group.
 
-We will deploy pods that handle 1 message every 30 seconds. The autoscalers are configured to create 4 nodes per pod.
+We will deploy pods that handle 1 message every 30 seconds. The autoscalers are configured to create 4 pods per node.
 
 ## Environment
 
