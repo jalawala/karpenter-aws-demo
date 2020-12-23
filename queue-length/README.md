@@ -40,28 +40,13 @@ kubectl get pods -n karpenter
 ## Watch demo
 
 ```bash
-function twatch() {
-  if [[ $1 = '-d' ]]; then
-    local dflag="-d"
-	shift
-  else
-    local dflag=""
-  fi
-  if [[ -z $TMUX ]]; then
-	watch $dflag "$1"
-  else
-	tmux split-window -d -p 10 "watch $dflag \"$1\""
-	tmux select-layout tiled
-  fi
-}
-
-# Manually run these in separate terminal windows, if you don't have tmux
-twatch 'kubectl get pods -l app=subscriber -n karpenter-queue-length-demo'
-twatch 'kubectl get nodes -n karpenter-queue-length-demo'
-twatch -d 'kubectl get metricsproducer demo -n karpenter-queue-length-demo -ojson | jq .status.queue'
-twatch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
-twatch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh subscriber -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
-twatch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo -ojson | jq del\(.status.conditions\) | jq .spec,.status'
+# Manually run these in 7 separate terminal windows
+watch 'kubectl get pods -l app=subscriber -n karpenter-queue-length-demo'
+watch 'kubectl get nodes -n karpenter-queue-length-demo'
+watch -d 'kubectl get metricsproducer demo -n karpenter-queue-length-demo -ojson | jq .status.queue'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh subscriber -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
+watch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo -ojson | jq del\(.status.conditions\) | jq .spec,.status'
 watch "kubectl get metricsproducers capacity-watcher -n karpenter-queue-length-demo -ojson | jq -r '.status.reservedCapacity'"
 ```
 
