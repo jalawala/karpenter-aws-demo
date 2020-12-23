@@ -19,7 +19,7 @@ wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue-l
 QUEUE_NAME=$QUEUE_NAME \
 QUEUE_URL=$QUEUE_URL \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
-NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
+NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name karpenter-aws-demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
 ```
 
