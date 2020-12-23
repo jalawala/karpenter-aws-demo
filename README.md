@@ -17,9 +17,9 @@ REGION=us-west-2
 ```bash
 eksctl create cluster \
 --name ${CLUSTER_NAME} \
---version 1.16 \
+--version 1.18 \
 --region ${REGION} \
---nodegroup-name demo \
+--nodegroup-name karpenter-aws-demo \
 --node-type m5.2xlarge \
 --nodes 1 \
 --nodes-min 1 \
@@ -57,7 +57,7 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
   --set kubeStateMetrics.enabled=false \
   --set nodeExporter.enabled=false \
   --set prometheus.enabled=false
-kubectl apply -f https://raw.githubusercontent.com/awslabs/karpenter/main/releases/aws/v0.1.0.yaml
+kubectl apply -f https://raw.githubusercontent.com/awslabs/karpenter/main/releases/aws/manifest.yaml
 ```
 
 ### AWS Credentials
