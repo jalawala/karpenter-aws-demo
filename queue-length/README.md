@@ -2,7 +2,7 @@
 
 This demo will use the length of an AWS SQS Queue to autoscale a Deployment and Node Group.
 
-We will deploy pods that handle 1 message every 30 seconds. The autoscalers are configured to create 4 nodes per pod.
+We will deploy pods that handle 1 message every 30 seconds. The autoscalers are configured to create 4 pods per node.
 
 ## Environment
 
@@ -19,7 +19,7 @@ wget https://raw.githubusercontent.com/ellistarn/karpenter-aws-demo/main/queue-l
 QUEUE_NAME=$QUEUE_NAME \
 QUEUE_URL=$QUEUE_URL \
 QUEUE_ARN=arn:aws:sqs:$REGION:$AWS_ACCOUNT_ID:$QUEUE_NAME \
-NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
+NODE_GROUP_ARN=$(aws eks describe-nodegroup --nodegroup-name karpenter-aws-demo --cluster-name ${CLUSTER_NAME} --output json | jq -r ".nodegroup.nodegroupArn") \
 envsubst < manifest.yaml | kubectl apply -f -
 ```
 
@@ -37,38 +37,39 @@ kubectl delete pods -n karpenter -l control-plane=karpenter
 kubectl get pods -n karpenter
 ```
 
-## Watch Demo
+## Watch demo
 
 ```bash
-# Open in 7 separate terminals
+# Manually run these in 7 separate terminal windows
 watch 'kubectl get pods -l app=subscriber -n karpenter-queue-length-demo'
 watch 'kubectl get nodes -n karpenter-queue-length-demo'
-watch -d 'kubectl get metricsproducer demo -n karpenter-queue-length-demo -ojson | jq ".status.queue"'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-queue-length-demo -ojson | jq ".status" | jq "del(.conditions)"'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh subscriber -n karpenter-queue-length-demo -ojson | jq ".status" | jq "del(.conditions)"'
-watch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo -ojson | jq "del(.status.conditions)" | jq ".spec, .status"'
+watch -d 'kubectl get metricsproducer demo -n karpenter-queue-length-demo -ojson | jq .status.queue'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh capacity -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh subscriber -n karpenter-queue-length-demo -ojson | jq .status | jq del\(.conditions\)'
+watch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo -ojson | jq del\(.status.conditions\) | jq .spec,.status'
 watch "kubectl get metricsproducers capacity-watcher -n karpenter-queue-length-demo -ojson | jq -r '.status.reservedCapacity'"
 ```
 
-## Send messages to the Queue
+## Send messages to the queue
 
 ```bash
-# Send 10 messages to the queue every 10 seconds
-while true ;
-do
-aws sqs send-message-batch --queue-url $QUEUE_URL --entries "$(cat << EOM
+# Create 10 messages to send to SQS
+read -r -d '' QUEUE_ENTRIES <<EOM
 [
-  {"Id": "0","MessageBody": " "},{"Id": "1","MessageBody": " "},{"Id": "2","MessageBody": " "},{"Id": "3","MessageBody": " "},
-  {"Id": "4","MessageBody": " "},{"Id": "5","MessageBody": " "},{"Id": "6","MessageBody": " "},{"Id": "7","MessageBody": " "},
-  {"Id": "8","MessageBody": " "},{"Id": "9","MessageBody": " "}
+  {"Id": "0","MessageBody": "body"},{"Id": "1","MessageBody": "body"},{"Id": "2","MessageBody": "body"},{"Id": "3","MessageBody": "body"},
+  {"Id": "4","MessageBody": "body"},{"Id": "5","MessageBody": "body"},{"Id": "6","MessageBody": "body"},{"Id": "7","MessageBody": "body"},
+  {"Id": "8","MessageBody": "body"},{"Id": "9","MessageBody": "body"}
 ]
 EOM
-)" ;
-sleep 10;
+
+# Send messages to the queue every 10 seconds
+while true; do
+  aws sqs send-message-batch --queue-url $QUEUE_URL --entries "$QUEUE_ENTRIES"
+  sleep 10
 done
 ```
 
-# Cleanup
+# Clean up
 
 ```bash
 rm manifest.yaml
