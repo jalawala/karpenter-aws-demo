@@ -37,7 +37,7 @@ kubectl delete pods -n karpenter -l control-plane=karpenter
 kubectl get pods -n karpenter
 ```
 
-## Watch Demo
+## Watch demo
 
 ```bash
 # Open in 7 separate terminals
@@ -50,25 +50,25 @@ watch -d 'kubectl get scalablenodegroup capacity -n karpenter-queue-length-demo 
 watch "kubectl get metricsproducers capacity-watcher -n karpenter-queue-length-demo -ojson | jq -r '.status.reservedCapacity'"
 ```
 
-## Send messages to the Queue
+## Send messages to the queue
 
 ```bash
-# Send 10 messages to the queue every 10 seconds
-while true ;
-do
-aws sqs send-message-batch --queue-url $QUEUE_URL --entries "$(cat << EOM
+read -r -d '' QUEUE_ENTRIES <<EOM
 [
   {"Id": "0","MessageBody": " "},{"Id": "1","MessageBody": " "},{"Id": "2","MessageBody": " "},{"Id": "3","MessageBody": " "},
   {"Id": "4","MessageBody": " "},{"Id": "5","MessageBody": " "},{"Id": "6","MessageBody": " "},{"Id": "7","MessageBody": " "},
   {"Id": "8","MessageBody": " "},{"Id": "9","MessageBody": " "}
 ]
 EOM
-)" ;
-sleep 10;
+
+# Send 10 messages to the queue every 10 seconds
+while true do
+  aws sqs send-message-batch --queue-url $QUEUE_URL --entries <<< "$QUEUE_ENTRIES"
+  sleep 10
 done
 ```
 
-# Cleanup
+# Clean up
 
 ```bash
 rm manifest.yaml
