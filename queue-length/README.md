@@ -48,9 +48,9 @@ function twatch() {
     local dflag=""
   fi
   if [[ -z $TMUX ]]; then
-	watch $dflag $@
+	watch $dflag "$1"
   else
-	tmux split-window -d -p 10 "watch $dflag $@"
+	tmux split-window -d -p 10 "watch $dflag \"$1\""
 	tmux select-layout tiled
   fi
 }
@@ -79,7 +79,7 @@ EOM
 
 # Send messages to the queue every 10 seconds
 while true; do
-  aws sqs send-message-batch --queue-url $QUEUE_URL --entries <<< "$QUEUE_ENTRIES"
+  aws sqs send-message-batch --queue-url $QUEUE_URL --entries "$QUEUE_ENTRIES"
   sleep 10
 done
 ```
