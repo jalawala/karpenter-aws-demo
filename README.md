@@ -57,7 +57,7 @@ helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheu
   --set kubeStateMetrics.enabled=false \
   --set nodeExporter.enabled=false \
   --set prometheus.enabled=false
-kubectl apply -f https://raw.githubusercontent.com/awslabs/karpenter/main/releases/aws/manifest.yaml
+kubectl apply -f https://raw.githubusercontent.com/awslabs/karpenter/v0.1.1/releases/aws/manifest.yaml
 ```
 
 ### AWS Credentials
