@@ -115,8 +115,8 @@ kubectl get pods -n karpenter
 
 ## Demos
 
-* [Queue Length](https://github.com/ellistarn/karpenter-aws-demo/blob/main/queue/)
-* [Reserved Capacity](https://github.com/ellistarn/karpenter-aws-demo/blob/main/reserved-capacity)
+* [Queue Length](./queue-length/)
+* [Reserved Capacity](./reserved-capacity)
 
 ## Cleanup
 
