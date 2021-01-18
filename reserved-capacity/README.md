@@ -26,6 +26,13 @@ REPLICAS=10 envsubst < inflate.yaml | kubectl apply -f -
 REPLICAS=30 envsubst < inflate.yaml | kubectl apply -f -
 ```
 
+## Create port forward
+
+```bash
+kubectl -n karpenter port-forward prometheus-karpenter-monitor-0 8080:9090
+```
+
+
 ## Cleanup
 
 ```bash
