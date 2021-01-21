@@ -16,7 +16,7 @@ spec:
         app: ec2spotcustomscheduler
     spec:
       nodeSelector:
-        lifecycle: OnDemand     
+        eks.amazonaws.com/nodegroup: karpenter-aws-demo
       containers:
         - name: ec2spotcustomscheduler
           image: 000474600478.dkr.ecr.us-east-1.amazonaws.com/ec2spotcustomscheduler:latest

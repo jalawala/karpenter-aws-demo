@@ -43,7 +43,7 @@ spec:
           image: ellistarn/debug
           env:
             - name: AWS_DEFAULT_REGION
-              value: "us-west-2"
+              value: "us-east-1"
             - name: AWS_DEFAULT_OUTPUT
               value: "json"
           command:

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: karpenter-reserved-capacity-demo
+---
+apiVersion: autoscaling.karpenter.sh/v1alpha1
+kind: MetricsProducer
+metadata:
+  name: pendingcapacitymetricsproducer
+  namespace: karpenter-reserved-capacity-demo
+spec:
+  pendingCapacity:
+    nodeSelector:
+      eks.amazonaws.com/nodegroup: karpenter-aws-demo

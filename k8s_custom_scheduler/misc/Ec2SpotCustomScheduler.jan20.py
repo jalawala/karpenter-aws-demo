@@ -34,7 +34,6 @@ pendingPodsList = []
 failedPodsList = []
 runningPodsList =[]
 nodesListPerNodeLabel = {}
-DEBUG_ENABLED = 0
 
 Q_   = ureg.Quantity
 
@@ -51,21 +50,17 @@ def scheduler(name, node, namespace):
 #tl = Timeloop()
 
 #@tl.job(interval=timedelta(seconds=10))  
-def RunCustomKubeScheduler():
+def RunEc2SpotCustomScheduler():
     
-    DEBUG_ENABLED = 0
     #global pendingPodsList
     #global failedPodsList
     
-    print("Running RunCustomKubeScheduler loop !!!")
-    
     CustomKubeSchedulingClusterDeploymentData = get_custom_deployments()
 
-    #print("CustomKubeSchedulingClusterDeploymentData={}".format(CustomKubeSchedulingClusterDeploymentData))
+    pprint("CustomKubeSchedulingClusterDeploymentData={}".format(CustomKubeSchedulingClusterDeploymentData))
     
     for namespace,  deploymentCustomSchedulingData in CustomKubeSchedulingClusterDeploymentData.items():
-        if DEBUG_ENABLED:
-            print("namespace={} deploymentCustomSchedulingData={}".format(namespace, deploymentCustomSchedulingData))
+        print("namespace={} deploymentCustomSchedulingData={}".format(namespace, deploymentCustomSchedulingData))
         if  deploymentCustomSchedulingData != {}:
             CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData)
             
@@ -78,13 +73,13 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
     global nodesListPerNodeLabel
     
     
-    #print("namespace={} deploymentCustomSchedulingData={}".format(namespace, deploymentCustomSchedulingData))
+    print("namespace={} deploymentCustomSchedulingData={}".format(namespace, deploymentCustomSchedulingData))
     #exit(0)
     #namespace = 'default'
     #lifecycleList = ['OnDemand', 'Ec2Spot']
     for deploymentName, CustomSchedulingData in deploymentCustomSchedulingData.items():
         
-        print("namespace={} deploymentName={} CustomSchedulingData={}".format(namespace, deploymentName, CustomSchedulingData))
+        print("deploymentName={} CustomSchedulingData={}".format(deploymentName, CustomSchedulingData))
         
         #exit(0)
         
@@ -92,7 +87,6 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
         runningPodsList = []
         pendingPodsList = []
         failedPodsList =[]
-        
         
         getPodsListForDeployment(namespace, deploymentName)  
         
@@ -103,35 +97,23 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
         #print("NumOfPodsRunning={} runningPodsList={}".format(NumOfPodsRunning, runningPodsList))
         #print("NumOfPodsPending={} pendingPodsList={}".format(NumOfPodsPending, pendingPodsList))
         #print("NumOfPodsFailed={} failedPodsList={}".format(NumOfPodsFailed, failedPodsList))
-
-        DEBUG_ENABLED = 1
         
-        if DEBUG_ENABLED:
-            print("No of currently running pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsRunning))
-            print("No of currently pending pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsPending))
-            print("No of currently failed pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsFailed))
-    
-                    
-        nodesListPerNodeLabel = {}
         get_node_available_nodes_list(CustomSchedulingData)
         
-        DEBUG_ENABLED = 0
-        
-        if DEBUG_ENABLED:
-            for i, pod in  enumerate (runningPodsList):
-                print("i={} running pod_name={} node_name={}".format(i+1, pod['name'], pod['node_name']))
-    
-            for i, pod in  enumerate (pendingPodsList):
-                print("i={} pending pod_name={}".format(i+1, pod['name']))
-    
-            for i, pod in  enumerate (failedPodsList):
-                print("i={} failed pod_name={}".format(i+1, pod['name']))
+        for i, p in  enumerate (runningPodsList):
+            print("i={} running pod_name={} node_name={}".format(i+1, p['name'], p['node_name']))
+
+        for i, p in  enumerate (pendingPodsList):
+            print("i={} pending pod_name={}".format(i+1, p['name']))
+
+        for i, p in  enumerate (failedPodsList):
+            print("i={} failed pod_name={}".format(i+1, p['name']))
 
         for nodeLabel, availableNodesData in nodesListPerNodeLabel.items():
             #print("nodeLabel={} availableNodesData={}".format(nodeLabel, availableNodesData))
             i = 1
             for nodeName in availableNodesData.keys():
-                print("Available node with Label: {} i={} node={}".format(nodeLabel, i, nodeName))
+                print("nodeLabel: {} i={} nodeName={}".format(nodeLabel, i, nodeName))
                 i += 1
         
         #runningPodsList = podsList['runningPodsList']
@@ -143,7 +125,7 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
         for nodeLabel, NumOfPodsToBeRunning in CustomSchedulingData.items():
 
             #NumOfPodsToBeRunning = numOfReplicas
-            print("CustomScheduleStrategy needs {} pods running on Label: {}".format(NumOfPodsToBeRunning, nodeLabel))
+            print("nodeLabel: {} NumOfPodsToBeRunning={}".format(nodeLabel, NumOfPodsToBeRunning))
             
             #pprint(podsList)
 
@@ -154,57 +136,49 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
             NumOfPodsRunningAlready = 0
             podsAlreadyRunningOnNodeLabelList =  []
             
-            DEBUG_ENABLED = 1
-            for pod in runningPodsList:
-                if pod['node_name'] in nodesListPerNodeLabel[nodeLabel].keys():
-                    NumOfPodsRunningAlready += 1
-                    podsAlreadyRunningOnNodeLabelList.append(pod)
-                    if DEBUG_ENABLED:
-                        print("i={} pod={} already runs on node={} Label: {}".format(NumOfPodsRunningAlready, pod['name'], pod['node_name'], nodeLabel))
+            for podRunning in runningPodsList:
+                if podRunning['node_name'] in nodesListPerNodeLabel[nodeLabel].keys():
+                    podsAlreadyRunningOnNodeLabelList.append(podRunning)
     
-            if NumOfPodsRunningAlready == NumOfPodsToBeRunning:
-                print("Required no of pods i.e. {} already running on Label: {}. So no need to Schedule !!".format(NumOfPodsRunningAlready, nodeLabel))
-            elif NumOfPodsRunningAlready < NumOfPodsToBeRunning:
-                NumOfPodsToBeScheduled = NumOfPodsToBeRunning - NumOfPodsRunningAlready
-                if NumOfPodsPending >= NumOfPodsToBeScheduled:
-                    print("Need {} pods on Label: {} and {} are already running. Scheduling remaining {} pods".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToBeScheduled))
-                    try:
-                        schedulePods(namespace,  NumOfPodsToBeScheduled, nodeLabel)
-                        #exit(0)
-                    except Exception as e:
-                        print(e)                    
-                elif NumOfPodsPending < NumOfPodsToBeScheduled:
-                    if NumOfPodsPending > 0:
-                        NumOfPodsToBeScheduled = NumOfPodsPending
-                        print("Need {} pods on Label: {} and {} are already running. But only {} are pending. So scheduling them for now".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToBeScheduled))
-                    elif NumOfPodsPending == 0:
-                        print("Need {} pods on Label: {} and {} are already running. But no pods are pending. So skipping scheduling for now until they are in pending state".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready))
-            elif NumOfPodsRunningAlready > NumOfPodsToBeRunning:
-                NumOfPodsToDeleted = NumOfPodsRunningAlready - NumOfPodsToBeRunning
-                print("Need {} pods on Label: {} and {} are already running. Deleting additional {} pods".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToDeleted))
+            NumOfAlreadyRunningPods = len (podsAlreadyRunningOnNodeLabelList)
+
+            for i, p in  enumerate (podsAlreadyRunningOnNodeLabelList):
+                pprint("running pod i={} nodeLabel={} node_name={} pod_name={}".format(i,nodeLabel, p['node_name'], p['name']))
+                    
+            if NumOfAlreadyRunningPods == NumOfPodsToBeRunning:
+                print("NumOfAlreadyRunningPods == NumOfPodsToBeRunning = {}. So no need to Schedule".format(NumOfAlreadyRunningPods))
+            elif NumOfAlreadyRunningPods < NumOfPodsToBeRunning:
+                NumOfPodsToBeScheduled = NumOfPodsToBeRunning - NumOfAlreadyRunningPods
                 try:
-                    deletePods(namespace, NumOfPodsToDeleted, podsAlreadyRunningOnNodeLabelList)
+                    schedulePods(namespace,  NumOfPodsToBeScheduled, nodeLabel)
+                    exit(0)
                 except Exception as e:
-                    print(e)
+                    pprint(e)
+            elif NumOfAlreadyRunningPods > NumOfPodsToBeRunning:
+                NumOfPodsToDeleted = NumOfAlreadyRunningPods - NumOfPodsToBeRunning
+                try:
+                    deletePods(NumOfPodsToDeleted, podsAlreadyRunningOnNodeLabelList)
+                except Exception as e:
+                    pprint(e)
     
-        #pendingPodsList = []                
-        #NumOfPodsFailed = []
+        pendingPodsList = []                
+        NumOfPodsFailed = []
         #pprint(podsList)
         #lifecycle = 'OnDemand'
         #lifecycle = 'Ec2Spot'
         #get_node_available_nodes_list(lifecycle)
         
-def deletePods(namespace, NumOfPodsToDeleted, podsAlreadyRunningOnNodeLabelList):
+def deletePods(NumOfPodsToDeleted, podsAlreadyRunningOnNodeLabelList):
     
-    #namespace = 'default'    
-    for i in range(NumOfPodsToDeleted):
+    namespace = 'default'    
+    for i in range(0, NumOfPodsToDeleted):
         pod = podsAlreadyRunningOnNodeLabelList[i]
         grace_period_seconds = 30
         body = client.V1DeleteOptions()
         #body = {}  
-        print("Deleting {}/{} pod {}".format(i+1, NumOfPodsToDeleted, pod['name']))    
+        pprint("deletePods i={} pod={} NumOfPodsToDeleted={}".format(i, pod['name'], NumOfPodsToDeleted ))    
         response = core_api.delete_namespaced_pod(name=pod['name'], namespace=namespace, grace_period_seconds=grace_period_seconds, body=body)
-        #pprint(response)        
+        pprint(response)        
         
 def schedulePods(namespace, NumOfPodsToBeScheduled, nodeLabel):
     
@@ -214,41 +188,30 @@ def schedulePods(namespace, NumOfPodsToBeScheduled, nodeLabel):
     
     #namespace = 'default'
     
+    if NumOfPodsToBeScheduled > len(pendingPodsList):
+        pprint("schedulePods NumOfPodsToBeScheduled={} is greater than number of pending pods={}. So skipping schedulePods".format(NumOfPodsToBeScheduled, len(pendingPodsList)))
+        return        
         
     for i in range(NumOfPodsToBeScheduled):
         pod = pendingPodsList[0]
-        print("attempting to schedule {}/{} pod={} with cpu_req={} mem_req={} for nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req'], nodeLabel))
-         
-        isPodScheduled = 0
-        
+        print("attempting to schedule i={} NumOfPodsToBeScheduled={} pod={} with cpu_req={} mem_req={}".format(i, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req']))
+                    
         for node, stats in nodesListPerNodeLabel[nodeLabel].items():
                         
-            print("Checking free resources on node={} with cpu_free={} and mem_free={} for nodeLabel={}".format(node, stats['cpu_free'], stats['mem_free'], nodeLabel))
-            
+            print("Checking for free resources on node={} with cpu_free={} mem_free={}".format(node, stats['cpu_free'], stats['mem_free']))
+                        #pprint(node)
             if pod['cpu_req'] <= stats['cpu_free'] and pod['mem_req'] <= stats['mem_free']:
+                print("scheduling pod={} onto the node={}".format(pod['name'], node))
                 
-                #before_node_cpu_free = nodesListPerNodeLabel[nodeLabel][node]['cpu_free']
-                #before_node_mem_free = nodesListPerNodeLabel[nodeLabel][node]['mem_free']
-                #print("node resources before scheduling pod: Label={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
+                print("node resources before schedule: nodeLabel={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
                 res = scheduler(pod['name'], node, namespace)
-                isPodScheduled = 1
-                stats['cpu_free'] = stats['cpu_free'] - pod['cpu_req']
-                stats['mem_free'] = stats['mem_free'] - pod['mem_req']                
-                #after_node_cpu_free = nodesListPerNodeLabel[nodeLabel][node]['cpu_free']
-                #after_node_mem_free = nodesListPerNodeLabel[nodeLabel][node]['mem_free']
-                
-                print("Scheduled {}/{} pod={} on node={} with nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], node, nodeLabel))
-                #print("pod={} pod_cpu_req={} (node_cpu_free = {} - {}) pod_mem_req={} (node_mem_free = {} - {})".format(pod['name'], pod['cpu_req'], before_node_cpu_free, after_node_cpu_free, pod['mem_req'], before_node_mem_free, after_node_mem_free))
-                print("node resources after scheduling pod: Label={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
                 #pprint(res)
-
+                stats['cpu_free'] = stats['cpu_free'] - pod['cpu_req']
+                stats['mem_free'] = stats['mem_free'] - pod['mem_req']
                 pendingPodsList.remove(pod)
-                
+                print("node resources before schedule: nodeLabel={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
                 break
                                 
-        
-        if isPodScheduled == 0:
-            print("failed scheduling {}/{} pod={} with cpu_req={} mem_req={} for nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req'], nodeLabel))
         
 def getPodsListForDeployment(namespace, deploymentName):
     
@@ -312,7 +275,6 @@ def getPodsListForDeployment(namespace, deploymentName):
 
 def get_custom_deployments():
 
-    DEBUG_ENABLED = 0
     CustomKubeSchedulingClusterDeploymentData  = {}
     #namespaceList =[]
     namespacedataList = core_api.list_namespace().to_dict()['items']
@@ -321,21 +283,18 @@ def get_custom_deployments():
         CustomKubeSchedulingClusterDeploymentData[namespace] = get_custom_deployments_per_namespace(namespace)
         #namespaceList.append(name)
         
-    if DEBUG_ENABLED:
-        print("CustomKubeSchedulingClusterDeploymentData={}".format(CustomKubeSchedulingClusterDeploymentData))
+    print("CustomKubeSchedulingClusterDeploymentData={}".format(CustomKubeSchedulingClusterDeploymentData))
     
     return CustomKubeSchedulingClusterDeploymentData
     
 def get_custom_deployments_per_namespace(namespace):
-    
-    DEBUG_ENABLED = 0
     #CustomKubeSchedulingDeploymentData  = []
     CustomKubeSchedulingDeploymentData  = {}
     #namespace='default'
     #name = 'nginx'
     name = '1'
     #field_selector = ("metadata.name=" + name)
-    #field_selector = ("metadata.annotations.OnDemandBase=" + name)    
+    field_selector = ("metadata.annotations.OnDemandBase=" + name)    
     # get deployment by namespace
     #resp = apis_api.list_namespaced_deployment(namespace=namespace, field_selector=field_selector)
 
@@ -352,15 +311,9 @@ def get_custom_deployments_per_namespace(namespace):
                 numOfReplicas = deployment.spec.replicas
                 #deploymentData[deploymentName] = deployment.metadata.name
                 Strategy = annotations['CustomPodScheduleStrategy']
-                DEBUG_ENABLED = 1
-                if DEBUG_ENABLED:
-                    print("Found CustomPodScheduleStrategy : {} for deployment {} with numOfReplicas {} in namespace {}".format(Strategy, deploymentName, numOfReplicas, namespace))
                 #deploymentData['pod_replicas'] = deployment.spec.replicas
                 #deploymentData['CustomPodScheduleStrategy'] = get_pods_custom_pod_schedule_strategy(Strategy, deployment.spec.replicas)
                 CustomKubeSchedulingDeploymentData[deploymentName] = get_pods_custom_pod_schedule_strategy(Strategy, numOfReplicas)
-                DEBUG_ENABLED = 0
-                if DEBUG_ENABLED:
-                    print("Pod to label mapping for deployment = {} is {}".format(deploymentName, CustomKubeSchedulingDeploymentData[deploymentName]))
                 #deploymentData['NumOfOnDemandPodsToBeRunning'] = int (deploymentData['OnDemandBase'] + (deploymentData['pod_replicas'] - deploymentData['OnDemandBase']) *  deploymentData['OnDemandAbovePercentage'] / 100)
                 #deploymentData['NumOfSpotPodsToBeRunning'] = deploymentData['pod_replicas'] - deploymentData['NumOfOnDemandPodsToBeRunning']
                 
@@ -373,11 +326,7 @@ def get_custom_deployments_per_namespace(namespace):
                 #print("OnDemandBase={}, OnDemandAbovePercentage={} SpotASGName={} OnDemandASGName={} pod_replicas={} NumOfOnDemandPods={} NumOfSpotPods={}".format(OnDemandBase, OnDemandAbovePercentage, SpotASGName, OnDemandASGName, pod_replicas, NumOfOnDemandPods, NumOfSpotPods))
                 
 def get_pods_custom_pod_schedule_strategy(Strategy, numOfReplicas):
-    
-    DEBUG_ENABLED = 0
-    
-    if DEBUG_ENABLED:
-        print("Strategy={} numOfReplicas={}".format(Strategy, numOfReplicas))
+    print("Strategy={} numOfReplicas={}".format(Strategy, numOfReplicas))
     
     CustomPodScheduleStrategy = {}
     nodeLabelToReplicas = {}
@@ -386,14 +335,11 @@ def get_pods_custom_pod_schedule_strategy(Strategy, numOfReplicas):
     
     StrategyList = Strategy.split(':')
     
-    if DEBUG_ENABLED:
-        print("StrategyList={}".format(StrategyList))
+    print("StrategyList={}".format(StrategyList))
     
     numOfBaseValues = 0
     for nodeStrategy in StrategyList:
-        
-        if DEBUG_ENABLED:
-            print("nodeStrategy: {}".format(nodeStrategy))
+        print("nodeStrategy: {}".format(nodeStrategy))
         
         nodeStrategyPartsList = nodeStrategy.split(',')
         
@@ -416,35 +362,30 @@ def get_pods_custom_pod_schedule_strategy(Strategy, numOfReplicas):
                 else:
                     base = numOfReplicas
                     numOfReplicas = 0
-                if DEBUG_ENABLED:
-                    print("base={}".format(nodeStrategySubPartList[1]))
+                print("base={}".format(nodeStrategySubPartList[1]))
             elif nodeStrategySubPartList[0] == 'weight':
                 weight = int(nodeStrategySubPartList[1])
                 totalWeight += weight
-                if DEBUG_ENABLED:
-                    print("weight={}".format(weight))                
+                print("weight={}".format(weight))                
             else:
                 nodeLabel = nodeStrategyPart
-                if DEBUG_ENABLED:
-                    print("label key={} value={}".format(nodeStrategySubPartList[0], nodeStrategySubPartList[1]))
+                print("label key={} value={}".format(nodeStrategySubPartList[0], nodeStrategySubPartList[1]))
                 
         #nodeLabelToReplicas [nodeLabel] = base
         nodeLabelToWights [nodeLabel] = weight
         CustomPodScheduleStrategy [nodeLabel] = base
         
     
-    if DEBUG_ENABLED:
-        print("nodeLabelToReplicas={} nodeLabelToWights={}".format(nodeLabelToReplicas, nodeLabelToWights))
-        print("numOfBaseValues = {} totalWeight={} numOfReplicas={}".format(numOfBaseValues, totalWeight, numOfReplicas))
-        print("CustomPodScheduleStrategy = {}".format(CustomPodScheduleStrategy))
+    print("nodeLabelToReplicas={} nodeLabelToWights={}".format(nodeLabelToReplicas, nodeLabelToWights))
+    print("numOfBaseValues = {} totalWeight={} numOfReplicas={}".format(numOfBaseValues, totalWeight, numOfReplicas))
+    print("CustomPodScheduleStrategy = {}".format(CustomPodScheduleStrategy))
     
     totalNumOfLables = len (CustomPodScheduleStrategy)
     labelNum = 0
     
     for key, replicas in CustomPodScheduleStrategy.items():
         weight = nodeLabelToWights[key]
-        if DEBUG_ENABLED:
-            print("key: {} replicas={} weight={}, totalWeight={}".format(key, replicas, weight, totalWeight))
+        print("key: {} replicas={} weight={}, totalWeight={}".format(key, replicas, weight, totalWeight))
         if labelNum == totalNumOfLables - 1:
             weightReplicas = numOfReplicas
             replicas = replicas + weightReplicas
@@ -453,14 +394,12 @@ def get_pods_custom_pod_schedule_strategy(Strategy, numOfReplicas):
             replicas = replicas + weightReplicas
             
         labelNum += 1
-        numOfReplicas -= weightReplicas
-        if DEBUG_ENABLED:
-            print("weightReplicas: {} replicas={} labelNum={}, numOfReplicas={}".format(weightReplicas, replicas, labelNum, numOfReplicas))           
+        numOfReplicas -= weightReplicas    
+        print("weightReplicas: {} replicas={} labelNum={}, numOfReplicas={}".format(weightReplicas, replicas, labelNum, numOfReplicas))           
         CustomPodScheduleStrategy[key] = replicas
     
-    if DEBUG_ENABLED:
-        print("CustomPodScheduleStrategy = {}".format(CustomPodScheduleStrategy))    
-        print("numOfBaseValues = {} totalWeight={} numOfReplicas={}".format(numOfBaseValues, totalWeight, numOfReplicas))
+    print("CustomPodScheduleStrategy = {}".format(CustomPodScheduleStrategy))    
+    print("numOfBaseValues = {} totalWeight={} numOfReplicas={}".format(numOfBaseValues, totalWeight, numOfReplicas))
             
     return CustomPodScheduleStrategy
     
@@ -562,7 +501,7 @@ if __name__ == '__main__':
     #ready_nodes = nodes_available()
     #pprint(ready_nodes)
     #name='review-v1-787d8fbfbb-ltdzt'
-    #node='ip-10-0-3-253.ec2.internal'
+    node='ip-10-0-3-253.ec2.internal'
     #namespace='ecommerce'
     #ret=scheduler(name, node, namespace)
     #pprint(ret)
@@ -570,12 +509,12 @@ if __name__ == '__main__':
     #test()
     #testpod()
     #check_node_resources(node)
-    #RunCustomKubeScheduler()
+    #RunEc2SpotCustomScheduler()
     #getPodsListForDeployment(' ')
     #lifecycle = 'OnDemand'
     #lifecycle = 'Ec2Spot'
     #get_node_available_nodes_list(lifecycle)
-    #RunCustomKubeScheduler()
+    #RunEc2SpotCustomScheduler()
     #NumOfPodsToDeleted = 1
     #podsAlreadyRunningOnNodeLabelList = []
     #d ={'name':'nginx-66cb875766-vx6bp'}
@@ -587,8 +526,7 @@ if __name__ == '__main__':
     #testlist()
     #tl.start(block=True)
     while True:
-        RunCustomKubeScheduler()
-        val = input("Enter any letter to continue: ")
-        #time.sleep(10)
+        RunEc2SpotCustomScheduler()
+        time.sleep(10)
     
     
