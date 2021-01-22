@@ -115,6 +115,35 @@ Available node with Label: nodesize=spot4vcpu16gb i=2 node=ip-192-168-61-28.ec2.
 Available node with Label: nodesize=spot8vcpu32gb i=1 node=ip-192-168-51-161.ec2.internal
 ```
 We can see Karpenter scales up/down the nodes continousley eben though there is no changes to the pods
+You can also run below commands in seperate terminals or refer to AWS Autoscaling group console to check the scaling activity
+
+
+# Manually open in 5 separate terminals
+
+        
+```bash
+watch 'kubectl get pods -n karpenter-custom-kube-scheduler-demo'
+watch 'kubectl get nodes'
+watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
+watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
+```
+
+```bash
+watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
+watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
+```
+
+
+```bash
+watch 'kubectl get pods -n karpenter-custom-kube-scheduler-demo'
+watch 'kubectl get nodes'
+watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
+watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
+watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
+```
+
 
 ## Run Custom Scheduler as Deployment
 
@@ -200,42 +229,3 @@ check out the custom scheduler logs also check 'kubectl get pods'
 2. Even the ASG is scaled manually and place the pods using custom scheduler, CA will terminate these nodes and pods.
 3. One option is to use ASG scaling policies(ex: target tracking) instead of CA for scaling cluster
 
-## Setup the Karpenter Resources
-
-### Get the node group ARNs
-
-Get the list of node groups in the cluster
-
-```bash
-aws eks list-nodegroups --cluster eksworkshop
-```
-
-
-# Manually open in 5 separate terminals
-   "od-mng-4vcp-16gb",
-        "spot-mng-4vcp-16gb",
-        "spot-mng-8vcp-32gb"
-        
-        
-```bash
-watch 'kubectl get pods -n karpenter-custom-kube-scheduler-demo'
-watch 'kubectl get nodes'
-watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
-watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh od-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
-```
-
-```bash
-watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
-watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh spot-mng-4vcp-16gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
-```
-
-
-```bash
-watch 'kubectl get pods -n karpenter-custom-kube-scheduler-demo'
-watch 'kubectl get nodes'
-watch -d 'kubectl get metricsproducers.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq .status.reservedCapacity'
-watch -d 'kubectl get horizontalautoscalers.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq ".status" | jq del\(.conditions\)'
-watch -d 'kubectl get scalablenodegroups.autoscaling.karpenter.sh spot-mng-8vcp-32gb -n karpenter-custom-kube-scheduler-demo -ojson | jq "del(.status.conditions)"| jq ".spec, .status"'
-```
