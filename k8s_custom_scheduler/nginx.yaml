@@ -5,7 +5,8 @@ metadata:
   name: nginx
   annotations:
     UseCustomKubeScheduler: 'true'
-    CustomPodScheduleStrategy: 'nodesize=od4vcpu16gb,base=1,weight=0:nodesize=spot4vcpu16gb,weight=1:nodesize=spot8vcpu32gb,weight=1'
+    CustomPodScheduleStrategy: 'nodesize=od4vcpu16gb,base=1,weight=0:
+    nodesize=spot4vcpu16gb,weight=1:nodesize=spot8vcpu32gb,weight=1'
   labels:
     app: nginx
 spec:
