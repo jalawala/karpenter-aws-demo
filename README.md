@@ -23,9 +23,63 @@ eksctl create cluster \
 --node-type m5.2xlarge \
 --nodes 1 \
 --nodes-min 1 \
---nodes-max 10 \
+--nodes-max 20 \
 --managed
 ```
+
+### nodegroup
+
+```bash
+eksctl create nodegroup \
+--cluster eksworkshop \
+--version 1.17 \
+--region us-east-1 \
+--name spot-mng-4vcp-16gb \
+--instance-types m5.xlarge,m4.xlarge,m5a.xlarge,m5d.xlarge,m5n.xlarge,m5ad.xlarge,m5dn.xlarge \
+--nodes 1 \
+--nodes-min 1 \
+--nodes-max 20 \
+--managed  \
+--asg-access \
+--spot \
+--node-labels "lc=spot,apps=noncritical,nodesize=spot4vcpu16gb" 
+```
+
+### nodegroup
+
+```bash
+eksctl create nodegroup \
+--cluster eksworkshop \
+--version 1.17 \
+--region us-east-1 \
+--name spot-mng-8vcp-32gb \
+--instance-types m5.2xlarge,m4.2xlarge,m5a.2xlarge,m5d.2xlarge,m5n.2xlarge,m5ad.2xlarge,m5dn.2xlarge \
+--nodes 1 \
+--nodes-min 1 \
+--nodes-max 20 \
+--managed  \
+--asg-access \
+--spot \
+--node-labels "lc=spot,apps=noncritical,nodesize=spot8vcpu32gb" 
+```
+
+### nodegroup
+
+```bash
+eksctl create nodegroup \
+--cluster eksworkshop \
+--version 1.17 \
+--region us-east-1 \
+--name od-mng-4vcp-16gb \
+--instance-types m5.xlarge,m4.xlarge,m5a.xlarge,m5d.xlarge,m5n.xlarge,m5ad.xlarge,m5dn.xlarge \
+--nodes 1 \
+--nodes-min 1 \
+--nodes-max 20 \
+--managed  \
+--asg-access \
+--node-labels "lc=od,apps=critical,nodesize=od4vcpu16gb" 
+```
+
 
 ### Karpenter Controller
 
