@@ -14,8 +14,8 @@ from datetime import timedelta
 
 
 
-config.load_kube_config()
-#config.load_incluster_config()
+#config.load_kube_config()
+config.load_incluster_config()
 # doing this computation within a k8s cluster
 #k8s.config.load_incluster_config()
 core_api = client.CoreV1Api()
@@ -386,6 +386,7 @@ def get_node_available_nodes_list(CustomSchedulingData):
     
     
     for nodeLabel in CustomSchedulingData.keys():
+        #print("nodeLabel={}".format(nodeLabel))
         nodesListPerNodeLabel[nodeLabel] = {}
         nodeLabelParts = nodeLabel.split('=')
         nodeLabelKey = nodeLabelParts[0]
@@ -394,6 +395,8 @@ def get_node_available_nodes_list(CustomSchedulingData):
 
         availableNodesData = {}                          
         for node in core_api.list_node().to_dict()['items']:
+            
+            #print("node={}".format(node))
             
             node_labels    = node['metadata']['labels']
             
@@ -447,7 +450,7 @@ if __name__ == '__main__':
 
     while True:
         RunCustomKubeScheduler()
-        val = input("Enter any letter to continue: ")
-        #time.sleep(10)
+        #val = input("Enter any letter to continue: ")
+        time.sleep(10)
     
     
