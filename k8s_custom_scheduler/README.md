@@ -10,7 +10,7 @@ The custom kube scheduler checks for a specific annotation in the deployment acr
 
 Its basic work flow is as follows.
 
-![](./docs/Custom Kube Scheduler.jpg)
+![](./docs/CustomKubeScheduler.jpg)
 
 
 
