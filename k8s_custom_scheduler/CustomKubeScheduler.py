@@ -13,9 +13,14 @@ from timeloop import Timeloop
 from datetime import timedelta
 
 
+RUN_AS_K8S_DEPLOYMENT=0
+CUSTOM_KUBE_SCHEDULE_INTERVAL=10
 
-#config.load_kube_config()
-config.load_incluster_config()
+if RUN_AS_K8S_DEPLOYMENT:
+    config.load_incluster_config()
+else:
+    config.load_kube_config()
+
 # doing this computation within a k8s cluster
 #k8s.config.load_incluster_config()
 core_api = client.CoreV1Api()
@@ -450,7 +455,10 @@ if __name__ == '__main__':
 
     while True:
         RunCustomKubeScheduler()
-        #val = input("Enter any letter to continue: ")
-        time.sleep(10)
+        if RUN_AS_K8S_DEPLOYMENT:
+            time.sleep(CUSTOM_KUBE_SCHEDULE_INTERVAL)
+        else:    
+            val = input("Enter any letter to continue: ")
+        
     
     
