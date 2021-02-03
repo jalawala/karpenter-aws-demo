@@ -36,8 +36,11 @@ ureg = UnitRegistry()
 ureg.load_definitions('kubernetes_units.txt')
 
 pendingPodsList = []
+pendingNotReadyPodsList =[]
 failedPodsList = []
 runningPodsList =[]
+succeededPodsList= []
+unknownPodsList =[]
 nodesListPerNodeLabel = {}
 DEBUG_ENABLED = 0
 
@@ -71,8 +74,12 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
     
     global runningPodsList
     global pendingPodsList
+    global pendingNotReadyPodsList
     global failedPodsList
+    global succeededPodsList
+    global unknownPodsList
     global nodesListPerNodeLabel
+    
     
     
     #print("namespace={} deploymentCustomSchedulingData={}".format(namespace, deploymentCustomSchedulingData))
@@ -83,21 +90,30 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
         
         runningPodsList = []
         pendingPodsList = []
-        failedPodsList =[]
-        
+        pendingNotReadyPodsList =[]
+        failedPodsList = []
+        succeededPodsList = []
+        unknownPodsList = []
         
         getPodsListForDeployment(namespace, deploymentName)  
         
         NumOfPodsRunning  = len (runningPodsList)
         NumOfPodsPending  = len (pendingPodsList)
-        NumOfPodsFailed   = len (failedPodsList) 
+        NumOfPodsPendingNotReady = len (pendingNotReadyPodsList)
+        NumOfPodsFailed   = len (failedPodsList)
+        NumOfPodsSucceeded   = len (succeededPodsList) 
+        NumOfPodsUnknown   = len (unknownPodsList) 
+        
         
         DEBUG_ENABLED = 1
         
         if DEBUG_ENABLED:
             print("No of currently running pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsRunning))
             print("No of currently pending pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsPending))
+            print("No of currently pendingNotReady pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsPendingNotReady))
             print("No of currently failed pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsFailed))
+            print("No of currently succeeded pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsSucceeded))
+            print("No of currently unknown pods in namespace {} for deployment {} is {}".format(namespace, deploymentName, NumOfPodsUnknown))
     
                     
         nodesListPerNodeLabel = {}
@@ -142,18 +158,24 @@ def CustomSchedulePerNamespace(namespace, deploymentCustomSchedulingData):
             elif NumOfPodsRunningAlready < NumOfPodsToBeRunning:
                 NumOfPodsToBeScheduled = NumOfPodsToBeRunning - NumOfPodsRunningAlready
                 if NumOfPodsPending >= NumOfPodsToBeScheduled:
-                    print("Need {} pods on Label: {} and {} are already running. Scheduling remaining {} pods".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToBeScheduled))
-                    try:
-                        schedulePods(namespace,  NumOfPodsToBeScheduled, nodeLabel)
+                    print("Need {} pods on Label: {} and {} are already running. Scheduling remaining {} from pending {} pods".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToBeScheduled, NumOfPodsPending))
+                    #try:
+                    #schedulePods(namespace,  NumOfPodsToBeScheduled, nodeLabel)
                         #exit(0)
-                    except Exception as e:
-                        print(e)                    
+                    #except Exception as e:
+                    #    print(e)                    
                 elif NumOfPodsPending < NumOfPodsToBeScheduled:
                     if NumOfPodsPending > 0:
                         NumOfPodsToBeScheduled = NumOfPodsPending
                         print("Need {} pods on Label: {} and {} are already running. But only {} are pending. So scheduling them for now".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToBeScheduled))
                     elif NumOfPodsPending == 0:
+                        NumOfPodsToBeScheduled = 0
                         print("Need {} pods on Label: {} and {} are already running. But no pods are pending. So skipping scheduling for now until they are in pending state".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready))
+                        
+                if NumOfPodsToBeScheduled > 0:
+                    schedulePods(namespace,  NumOfPodsToBeScheduled, nodeLabel)
+                    
+                        
             elif NumOfPodsRunningAlready > NumOfPodsToBeRunning:
                 NumOfPodsToDeleted = NumOfPodsRunningAlready - NumOfPodsToBeRunning
                 print("Need {} pods on Label: {} and {} are already running. Deleting additional {} pods".format(NumOfPodsToBeRunning, nodeLabel, NumOfPodsRunningAlready, NumOfPodsToDeleted))
@@ -176,9 +198,11 @@ def schedulePods(namespace, NumOfPodsToBeScheduled, nodeLabel):
     global pendingPodsList
     global failedPodsList
     global runningPodsList
+    
+    podsToBeDeletedFromPendingList = []
         
     for i in range(NumOfPodsToBeScheduled):
-        pod = pendingPodsList[0]
+        pod = pendingPodsList[i]
         print("attempting to schedule {}/{} pod={} with cpu_req={} mem_req={} for nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req'], nodeLabel))
          
         isPodScheduled = 0
@@ -189,23 +213,35 @@ def schedulePods(namespace, NumOfPodsToBeScheduled, nodeLabel):
             
             if pod['cpu_req'] <= stats['cpu_free'] and pod['mem_req'] <= stats['mem_free']:
                 
-                res = scheduler(pod['name'], node, namespace)
-                isPodScheduled = 1
-                stats['cpu_free'] = stats['cpu_free'] - pod['cpu_req']
-                stats['mem_free'] = stats['mem_free'] - pod['mem_req']                
+                print("scheduling pod={} onto node={}".format(pod['name'], node))
+                #res = scheduler(pod['name'], node, namespace)
+                try:
+                    res = scheduler(pod['name'], node, namespace)
+                    print("res={}".format(res))
+                    isPodScheduled = 1
+                    stats['cpu_free'] = stats['cpu_free'] - pod['cpu_req']
+                    stats['mem_free'] = stats['mem_free'] - pod['mem_req']                
+                    
+                    print("Scheduled {}/{} pod={} on node={} with nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], node, nodeLabel))
+                    print("node resources after scheduling pod: Label={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
+    
+                    podsToBeDeletedFromPendingList.append(pod)
+                    #pendingPodsList.remove(pod)
+                    break                    
+                except Exception as e:
+                    print("error while scheduling {}/{} pod={} onto node={} error={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], node, e))
+                    #print(e)                
                 
-                print("Scheduled {}/{} pod={} on node={} with nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], node, nodeLabel))
-                print("node resources after scheduling pod: Label={}, node={} cpu_free={} mem_free={}".format(nodeLabel, node, nodesListPerNodeLabel[nodeLabel][node]['cpu_free'], nodesListPerNodeLabel[nodeLabel][node]['mem_free']))
-
-                pendingPodsList.remove(pod)
-                
-                break
-                                
-        
         if isPodScheduled == 0:
-            print("failed scheduling {}/{} pod={} with cpu_req={} mem_req={} for nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req'], nodeLabel))
-            break
+            print("failed to schedule {}/{} pod={} due to unavailable free resources. cpu_req={} mem_req={} for nodeLabel={}".format(i+1, NumOfPodsToBeScheduled, pod['name'], pod['cpu_req'], pod['mem_req'], nodeLabel))
+            #break
+            
+    for pod in podsToBeDeletedFromPendingList:
+        pendingPodsList.remove(pod)
         
+    
+    
+    
 def getPodsListForDeployment(namespace, deploymentName):
 
     field_selector = ("spec.schedulerName=" + CustomSchedulerName)    
@@ -233,14 +269,26 @@ def getPodsListForDeployment(namespace, deploymentName):
             stats["mem_req"]     = sum(memreqs)
             stats["mem_lmt"]     = sum(memlmts)
             stats["name"]        = pod['metadata']['name']
-            stats["status"]      = pod['status']['phase']
-            if stats["status"] == 'Pending':
-                pendingPodsList.append(stats)
-            elif stats["status"] == 'Running':
+            #stats["status"]      = pod['status']['phase']
+            stats["status"]      = pod['status']
+            
+            if pod['status']['phase'] == 'Pending':
+                #print("pod={} keys={}".format(pod['metadata']['name'], pod['status'].keys()))
+                #pprint("pod={} status={}".format(pod['metadata']['name'], pod['status']))
+                #if 'host_ip' in pod['status'].keys():
+                if pod['status']['host_ip'] == None:
+                    pendingPodsList.append(stats)
+                else:
+                    pendingNotReadyPodsList.append(stats)
+            elif pod['status']['phase'] == 'Running':
                 stats["node_name"]  = pod['spec']['node_name']
                 runningPodsList.append(stats)
-            elif stats["status"] == 'Failed':
+            elif pod['status']['phase'] == 'Failed':
                 failedPodsList.append(stats)
+            elif pod['status']['phase'] == 'Succeeded':
+                succeededPodsList.append(stats)
+            elif pod['status']['phase'] == 'Unknown':
+                unknownPodsList.append(stats)                
 
 
 def get_custom_deployments():

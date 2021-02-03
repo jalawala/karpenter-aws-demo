@@ -11,7 +11,7 @@ metadata:
 spec:
   replicas: 1
   type: AWSEKSNodeGroup
-  id: ${OD_NODE_GROUP_ARN}
+  id: arn:aws:eks:us-east-1:<ACCOUBT_ID>:nodegroup/eksworkshop/od-mng-4vcp-16gb/02bb8ac2-819c-b0b7-5c9a-07b52540bad6
 ---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: ScalableNodeGroup
@@ -21,7 +21,7 @@ metadata:
 spec:
   replicas: 1
   type: AWSEKSNodeGroup
-  id: ${SPOT_NODE_GROUP1_ARN}
+  id: arn:aws:eks:us-east-1:<ACCOUBT_ID>:nodegroup/eksworkshop/spot-mng-4vcp-16gb/0ebb8ac2-45a3-2a96-82c1-2b19e81f480c
 ---  
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: ScalableNodeGroup
@@ -31,7 +31,7 @@ metadata:
 spec:
   replicas: 1
   type: AWSEKSNodeGroup
-  id: ${SPOT_NODE_GROUP1_ARN}  
+  id: arn:aws:eks:us-east-1:<ACCOUBT_ID>:nodegroup/eksworkshop/spot-mng-8vcp-32gb/5abb8ac2-9d25-680f-a168-466242d413b8
 ---
 apiVersion: autoscaling.karpenter.sh/v1alpha1
 kind: HorizontalAutoscaler
